@@ -1,0 +1,12 @@
+{
+    "name": "DMXDriver",
+    "version": "1.0.0",
+    "keywords": "DMX, DMXReceiver, DMXController, DMX512",
+    "frameworks": "arduino",
+    "platforms": [
+        "atmelavr"
+    ],
+    "includes": [
+        "DMXDriver.h"
+    ]
+}
