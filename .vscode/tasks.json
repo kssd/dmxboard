@@ -2,10 +2,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "PlatformIO: Build Uno",
+      "label": "PlatformIO: Build Mega 2560",
       "type": "shell",
       "command": "platformio",
-      "args": ["run", "-e", "uno"],
+      "args": ["run", "-e", "megaatmega2560"],
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": ["$gcc"]
     },

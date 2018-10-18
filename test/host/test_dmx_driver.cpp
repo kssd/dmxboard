@@ -3,6 +3,7 @@
 #include "Arduino.h"
 #include <avr/interrupt.h>
 #include "DMXDriver.h"
+#include "../../src/include/ButtonEdges.h"
 
 volatile uint8_t UCSR0A, UCSR0B, UCSR0C, UBRR0H, UBRR0L, UDR0;
 static unsigned long now = 100;
@@ -32,6 +33,17 @@ static void receiveByte(uint8_t value, bool framingError = false) {
 }
 
 int main() {
+  uint8_t previous = 1; // CONFIG entry while INC is held.
+  assert(risingButtonEdges(1, previous) == 0);
+  assert(risingButtonEdges(0, previous) == 0); // Release is not a press.
+  assert(risingButtonEdges(1, previous) == 1);
+  assert(risingButtonEdges(1, previous) == 0); // No held-button repeats.
+  assert(risingButtonEdges(3, previous) == 2); // DEC rises while INC is held.
+  assert(risingButtonEdges(0, previous) == 0);
+  assert(risingButtonEdges(3, previous) == 3); // Simultaneous edges.
+  previous = 2; // Re-enter CONFIG with DEC held.
+  assert(risingButtonEdges(2, previous) == 0);
+
   assert(DMXDriver.dataUpdated());
   DMXDriver.resetUpdated();
   assert(!DMXDriver.dataUpdated());

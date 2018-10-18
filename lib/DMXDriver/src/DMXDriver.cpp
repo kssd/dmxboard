@@ -3,7 +3,7 @@
 #include "Arduino.h"
 #include "DMXDriver.h"
 
-#if !defined(DMX_USE_PORT1) && defined(USART_RX_vect)
+#if !defined(DMX_USE_PORT1) && (defined(USART0_RX_vect) || defined(USART_RX_vect))
 #define UCSRnA UCSR0A
 #define RXCn RXC0
 #define TXCn TXC0
@@ -22,11 +22,17 @@
 #define UDRn UDR0
 #define UDREn UDRE0
 #define FEn FE0
+#if defined(USART0_RX_vect)
+#define USARTn_RX_vect USART0_RX_vect
+#define USARTn_TX_vect USART0_TX_vect
+#define USARTn_UDRE_vect USART0_UDRE_vect
+#else
 #define USARTn_RX_vect USART_RX_vect
 #define USARTn_TX_vect USART_TX_vect
 #define USARTn_UDRE_vect USART_UDRE_vect
+#endif
 #else
-#error "ONLY ATMega3268 Supported"
+#error "DMXDriver requires AVR USART0 and its interrupt vectors"
 #endif
 
 #define SERIAL_8N1 ((0 << USBSn) | (0 << UPMn0) | (3 << UCSZn0))

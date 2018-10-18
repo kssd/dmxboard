@@ -1,6 +1,7 @@
 #include "DMXDriver.h"
 #include "TM1637Display.h"
 #include "include/DeviceId.h"
+#include "include/ButtonEdges.h"
 #include <Arduino.h>
 
 #define DISPLAY_BRIGHTNESS 4
@@ -9,7 +10,7 @@
 
 #define DEVICE_MODE_PIN 13
 /**
- * PINs with external interrupts (2/3) on Arduino Uno
+ * SET uses an external interrupt on Arduino Mega.
  **/
 #define ST_RST_BTN_PN 3
 
@@ -87,23 +88,23 @@ void updateChannels() {
   }
 }
 
-void enableIncrementDecrementPinChangeInterrupts() {
-  pinMode(INC_BTN_PN, INPUT);
-  pinMode(DEC_BTN_PN, INPUT);
+uint8_t previousButtons;
 
-  PCIFR = 0;
-  PCICR |= (1 << PCIE2);
-  PCMSK2 |= ((1 << PCINT20) | (1 << PCINT21));
+uint8_t readButtons() {
+  return (digitalRead(INC_BTN_PN) == HIGH ? 1 : 0) |
+         (digitalRead(DEC_BTN_PN) == HIGH ? 2 : 0);
 }
 
-void disableIncrementDecrementPinChangeInterrupts() {
-  PCIFR = 0;
-  PCICR &= ~(1 << PCIE2);
-  PCMSK2 &= ~((1 << PCINT20) | (1 << PCINT21));
+void pollButtons() {
+  // shortcut: polling misses sub-loop pulses; use interrupt-capable pins if needed.
+  uint8_t rising = risingButtonEdges(readButtons(), previousButtons);
+  if (event == SET_E)
+    return;
+  if (rising & 1)
+    event = INCR_E;
+  else if (rising & 2)
+    event = DECR_E;
 }
-
-void onIncrement() { event = INCR_E; }
-void onDecrement() { event = DECR_E; }
 
 // TODO(kssd) add debounce if requried.
 void onSet() { event = SET_E; }
@@ -141,8 +142,13 @@ void loop() {
     next(SET_E, CONFIG, [] { DMXDriver.terminate(); });
     break;
   case CONFIG:
-    on([] { enableIncrementDecrementPinChangeInterrupts(); });
-    next(SET_E, SET, [] { disableIncrementDecrementPinChangeInterrupts(); });
+    on([] {
+      pinMode(INC_BTN_PN, INPUT);
+      pinMode(DEC_BTN_PN, INPUT);
+      previousButtons = readButtons();
+    });
+    pollButtons();
+    next(SET_E, SET, [] {});
 
     next(INCR_E, CONFIG, [] {
       ID.incr();
@@ -164,12 +170,4 @@ void loop() {
   }
 
   event = NOUNCE_E;
-}
-
-ISR(PCINT2_vect) {
-  if (PIND & (1 << INC_BTN_PN)) {
-    event = INCR_E;
-  } else if (PIND & (1 << DEC_BTN_PN)) {
-    event = DECR_E;
-  }
 }

@@ -14,4 +14,4 @@ install:
 script:
   - c++ -std=c++11 -Itest/host/include -Ilib/DMXDriver/src test/host/test_dmx_driver.cpp lib/DMXDriver/src/DMXDriver.cpp -o /tmp/dmx-driver-tests
   - /tmp/dmx-driver-tests
-  - pio run -e uno
+  - pio run -e megaatmega2560
